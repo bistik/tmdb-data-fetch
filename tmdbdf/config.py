@@ -6,7 +6,7 @@ from dataclasses import dataclass
 class Config:
     database: str
     tmdb_token: str
-    openai_token: str
+    openai_api_key: str
     chroma_db: str
 
     @classmethod
@@ -14,6 +14,6 @@ class Config:
         return cls(
             database=os.getenv("SQLITE_DATABASE", "tmdbdf.db"),
             tmdb_token=os.getenv("TMDB_AUTH_TOKEN", ""),
-            openai_token=os.getenv("OPENAI_API_TOKEN", ""),
+            openai_api_key=os.getenv("OPENAI_API_KEY", ""),
             chroma_db=os.getenv("CHROMA_DATABASE", ""),
         )

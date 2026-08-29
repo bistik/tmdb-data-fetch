@@ -14,3 +14,4 @@ wheels/
 
 # database
 *.db
+chroma_data/

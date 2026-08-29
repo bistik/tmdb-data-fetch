@@ -80,6 +80,30 @@ def insert_request(database_name: str, url: str) -> None:
             """, (url,))
     print(f"Inserted request for {url}.")
 
+def get_movies_by_release_year(database_name: str, release_year: int) -> list[dict]:
+    """
+        Get all movies for the given release year.
+    """
+    with closing(get_connection(database_name)) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT * FROM movies WHERE strftime('%Y', release_date) = ?",
+            (str(release_year),)
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+def get_movie_by_title(database_name: str, title: str) -> dict | None:
+    """
+        Get a movie by title (case-insensitive, first match).
+    """
+    with closing(get_connection(database_name)) as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT * FROM movies WHERE title = ? COLLATE NOCASE LIMIT 1",
+            (title,)
+        ).fetchone()
+    return dict(row) if row else None
+
 def save_movies(database_name: str, movie: dict) -> int | None:
     """
         Save movies to the database only if the url has not been requested before.
