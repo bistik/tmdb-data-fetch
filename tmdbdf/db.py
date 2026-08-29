@@ -22,6 +22,7 @@ def create_tables(database_name: str) -> None:
                 popularity REAL,
                 vote_average REAL,
                 vote_count INTEGER,
+                has_embedding BOOLEAN NOT NULL DEFAULT 0,
                 date_added DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -47,21 +48,22 @@ def insert_movies(database_name: str, movies: list[dict]) -> None:
     """
         Insert movies into the database. (per page)
     """
-    with closing(get_connection(database_name)) as conn, conn:
-        cur = conn.executemany("""
-            INSERT INTO movies (
-                tmdb_id,
-                title,
-                backdrop_path,
-                poster_path,
-                overview,
-                release_date,
-                popularity,
-                vote_average,
-                vote_count
-            ) VALUES (:id, :title, :backdrop_path, :poster_path, :overview, :release_date, :popularity, :vote_average, :vote_count)
-        """, movies)
-        inserted = cur.rowcount
+    with closing(get_connection(database_name)) as conn:
+        with conn:
+            cur = conn.executemany("""
+                INSERT INTO movies (
+                    tmdb_id,
+                    title,
+                    backdrop_path,
+                    poster_path,
+                    overview,
+                    release_date,
+                    popularity,
+                    vote_average,
+                    vote_count
+                ) VALUES (:id, :title, :backdrop_path, :poster_path, :overview, :release_date, :popularity, :vote_average, :vote_count)
+            """, movies)
+            inserted = cur.rowcount
     print(f"Inserted {inserted} movies.")
     return inserted
 
@@ -69,12 +71,13 @@ def insert_request(database_name: str, url: str) -> None:
     """
         Insert a request into the database.
     """
-    with closing(get_connection(database_name)) as conn, conn:
-        conn.execute("""
-            INSERT INTO requests (
-                url
-            ) VALUES (?)
-        """, (url,))
+    with closing(get_connection(database_name)) as conn:
+        with conn:
+            conn.execute("""
+                INSERT INTO requests (
+                    url
+                ) VALUES (?)
+            """, (url,))
     print(f"Inserted request for {url}.")
 
 def save_movies(database_name: str, movie: dict) -> int | None:

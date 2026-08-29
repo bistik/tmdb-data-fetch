@@ -1,3 +1,5 @@
+import re
+
 import requests
 
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
@@ -24,6 +26,8 @@ def fetch_top_movies(
         resp.raise_for_status()
         result = resp.json()
         result["url"] = url
-        print(f"PAGE: {page + 1}", result.keys())
+        # print(f"PAGE: {page + 1}", result.keys(), len(result["results"]))
+        if len(result["results"]) == 0:
+            break
         results.append(result)
     return results
