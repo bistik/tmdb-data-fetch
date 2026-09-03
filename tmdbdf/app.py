@@ -1,8 +1,9 @@
+import logging
 import sys
 
 from dotenv import load_dotenv  # pyright: ignore[reportUnknownVariableType]
 
-from tmdbdf import api, db, cmd
+from tmdbdf import cmd
 from tmdbdf.config import Config
 
 
@@ -32,12 +33,13 @@ def main():
     command = sys.argv[1]
     load_dotenv()
     cfg = Config.from_env()
+    logging.basicConfig(level=cfg.log_level)
 
     if command == "add":
         _validate_command_arg()
         release_year = int(sys.argv[2])
         if not cfg.tmdb_token:
-            print("Add your TMDB access token to .env (see .env.example).")
+            logging.error("Add your TMDB access token to .env (see .env.example).")
             sys.exit(1)
         cmd.add(cfg, release_year=release_year)
 
@@ -45,9 +47,9 @@ def main():
         _validate_command_arg()
         release_year = int(sys.argv[2])
         if not cfg.openai_api_key:
-            print("Add your opeani_api_key to .env (see .env.example).")
+            logging.error("Add your opeani_api_key to .env (see .env.example).")
         if not cfg.chroma_db:
-            print("Add your chroma db data path to .env (see .env.example).")
+            logging.error("Add your chroma db data path to .env (see .env.example).")
         cmd.embed(cfg, release_year)
 
     elif command == "query":

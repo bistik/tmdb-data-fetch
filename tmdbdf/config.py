@@ -8,6 +8,7 @@ class Config:
     tmdb_token: str
     openai_api_key: str
     chroma_db: str
+    log_level: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -16,4 +17,5 @@ class Config:
             tmdb_token=os.getenv("TMDB_AUTH_TOKEN", ""),
             openai_api_key=os.getenv("OPENAI_API_KEY", ""),
             chroma_db=os.getenv("CHROMA_DATABASE", ""),
+            log_level = os.getenv("LOG_LEVEL", "WARNING").strip('\'"').upper()
         )

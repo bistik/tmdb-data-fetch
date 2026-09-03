@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 from contextlib import closing
 
@@ -32,7 +33,7 @@ def create_tables(database_name: str) -> None:
                 date_requested DEFAULT CURRENT_TIMESTAMP
             );
         """)
-    print("Tables created successfully.")
+    logging.info("Tables created successfully (if they don't exist already).")
 
 def has_request(database_name: str, url: str) -> bool:
     """
@@ -44,7 +45,7 @@ def has_request(database_name: str, url: str) -> bool:
         ).fetchone()[0]
     return bool(exists)
 
-def insert_movies(database_name: str, movies: list[dict]) -> None:
+def insert_movies(database_name: str, movies: list[dict]) -> int:
     """
         Insert movies into the database. (per page)
     """
@@ -64,7 +65,7 @@ def insert_movies(database_name: str, movies: list[dict]) -> None:
                 ) VALUES (:id, :title, :backdrop_path, :poster_path, :overview, :release_date, :popularity, :vote_average, :vote_count)
             """, movies)
             inserted = cur.rowcount
-    print(f"Inserted {inserted} movies.")
+    logging.info(f"Inserted {inserted} movies.")
     return inserted
 
 def insert_request(database_name: str, url: str) -> None:
@@ -78,16 +79,16 @@ def insert_request(database_name: str, url: str) -> None:
                     url
                 ) VALUES (?)
             """, (url,))
-    print(f"Inserted request for {url}.")
+    logging.info(f"Inserted request for {url}.")
 
 def get_movies_by_release_year(database_name: str, release_year: int) -> list[dict]:
     """
-        Get all movies for the given release year.
+        Get all movies for the given release year that has not been embedded.
     """
     with closing(get_connection(database_name)) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
-            "SELECT * FROM movies WHERE strftime('%Y', release_date) = ?",
+            "SELECT * FROM movies WHERE strftime('%Y', release_date) = ? AND has_embedding = FALSE",
             (str(release_year),)
         ).fetchall()
     return [dict(row) for row in rows]
@@ -104,7 +105,24 @@ def get_movie_by_title(database_name: str, title: str) -> dict | None:
         ).fetchone()
     return dict(row) if row else None
 
-def save_movies(database_name: str, movie: dict) -> int | None:
+def mark_movies_has_embedding(database_name: str, movie_ids: list[int]) -> int:
+    """
+        Set has_embedding = True for the given movie ids.
+        Returns the number of rows updated.
+    """
+    if not movie_ids:
+        return 0
+    with closing(get_connection(database_name)) as conn:
+        with conn:
+            cur = conn.executemany(
+                "UPDATE movies SET has_embedding = 1 WHERE id = ?",
+                [(movie_id,) for movie_id in movie_ids],
+            )
+            updated = cur.rowcount
+    logging.warning(f"Updated has_embedding for {updated} movies.")
+    return updated
+
+def save_movies(database_name: str, movie: dict) -> int:
     """
         Save movies to the database only if the url has not been requested before.
     """
