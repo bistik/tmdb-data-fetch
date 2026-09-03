@@ -37,5 +37,11 @@ def embed(cfg: config.Config, release_year: int) -> None:
 
 def find_similar(cfg: config.Config, title: str):
     movie = db.get_movie_by_title(cfg.database, title=title)
-    results = chroma.find_similar(cfg, movie=movie)
-    print(results)
+    movie_ids = chroma.find_similar(cfg, movie=movie, count=5)
+    if movie_ids:
+        logging.info('Similar movie IDs %s', movie_ids[0])
+        similar_movies = db.get_movies_by_ids(cfg.database, [int(id) for id in movie_ids[0]])
+        for sm in similar_movies:
+            print(f"\n\tTitle: {sm['title']}")
+            print(f"\tOverview: {sm['overview'][:100]}...")
+            print(f"\tDate: {sm['release_date']}")

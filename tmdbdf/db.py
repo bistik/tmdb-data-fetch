@@ -1,3 +1,4 @@
+import json
 import logging
 import sqlite3
 from contextlib import closing
@@ -90,6 +91,18 @@ def get_movies_by_release_year(database_name: str, release_year: int) -> list[di
         rows = conn.execute(
             "SELECT * FROM movies WHERE strftime('%Y', release_date) = ? AND has_embedding = FALSE",
             (str(release_year),)
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+def get_movies_by_ids(database_name: str, ids: list[int]) -> list[dict]:
+    """
+        Get all movies for the with the matching ids.
+    """
+    with closing(get_connection(database_name)) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT * FROM movies WHERE id IN (SELECT value FROM json_each(?))",
+            (json.dumps(ids),)
         ).fetchall()
     return [dict(row) for row in rows]
 
